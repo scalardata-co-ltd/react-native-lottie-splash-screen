@@ -11,9 +11,13 @@
 #import <React/RCTBridge.h>
 
 static bool waiting = true;
+static bool inAppWaiting = true;
 static bool isAnimationFinished = false;
 static bool addedJsLoadErrorObserver = false;
+static UIView* rootView = nil;
 static UIView* loadingView = nil;
+static UIView* inAppView = nil;
+static void (^play)(void) = nil;
 
 @implementation RNSplashScreen
 - (dispatch_queue_t)methodQueue {
@@ -55,30 +59,44 @@ RCT_EXPORT_MODULE(SplashScreen)
   [rootView addSubview:animationView];
 }
 
++ (void)showInLottieSplash:(UIView*)animationView inRootView:(UIView*)rootView {
+  [loadingView removeFromSuperview];
+  loadingView = animationView;
+  waiting = false;
+  [rootView addSubview:animationView];
+}
+
+// get animationView, rootView and function to play animation
++ (void)setInAppView:(void (^)(void))_play {
+  play = _play;
+}
+
++ (void)inAppHide {
+    if (waiting) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+          waiting = false;
+      });
+    } else {
+        waiting = true;
+        if (isAnimationFinished) {
+          dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+                         dispatch_get_main_queue(), ^{
+                           [loadingView removeFromSuperview];
+                         });
+        }
+    }
+}
+
 + (void)hide {
-  if (waiting) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      waiting = false;
-    });
-  } else {
-    waiting = true;
-      if (isAnimationFinished) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-                         [loadingView removeFromSuperview];
-                       });
-      }
-  }
+  play();
 }
 
 + (void)setAnimationFinished:(Boolean)flag {
     isAnimationFinished = true;
-    if (waiting) {
-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
-                     dispatch_get_main_queue(), ^{
-                       [loadingView removeFromSuperview];
-                     });
-    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+            dispatch_get_main_queue(), ^{
+                [loadingView removeFromSuperview];
+            });
 }
 
 + (void)jsLoadError:(NSNotification*)notification {

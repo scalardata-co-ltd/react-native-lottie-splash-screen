@@ -12,6 +12,10 @@
 @interface RNSplashScreen : NSObject<RCTBridgeModule>
 + (void)showSplash:(NSString*)splashScreen inRootView:(UIView*)rootView;
 + (void)showLottieSplash:(UIView*)splashScreen inRootView:(UIView*)rootView;
++ (void)showInLottieSplash:(UIView*)splashScreen inRootView:(UIView*)rootView;
++ (void)setInAppView:(void (^)(void))play;
++ (void)inApp;
++ (void)inAppHide;
 + (void)show;
 + (void)setAnimationFinished:(Boolean)flag;
 + (void)hide;
